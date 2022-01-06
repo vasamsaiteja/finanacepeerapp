@@ -4,7 +4,7 @@ const sqlite3 = require("sqlite3");
 const path = require("path");
 const bcrypt = require("bcrypt");
 const cors = require("cors");
-// const json = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
 
 const databasePath = path.join(__dirname, "financePeer.db");
 
@@ -22,9 +22,9 @@ const initializeDbAndServer = async () => {
       driver: sqlite3.Database,
     });
 
-    console.log(process.env.PORT);
+    // console.log(process.env.PORT);
 
-    app.listen(process.env.PORT || 3000, () =>
+    app.listen(3000, () =>
       console.log("Server Running at http://localhost:3000/")
     );
   } catch (error) {
@@ -69,9 +69,10 @@ app.post("/register", async (request, response) => {
 
 app.post("/login", async (request, response) => {
   const { username, password } = request.body;
+
   const selectUserQuery = `SELECT * FROM user WHERE username = '${username}';`;
   const databaseUser = await database.get(selectUserQuery);
-
+  //   console.log("data", databaseUser);
   if (databaseUser === undefined) {
     response.status(400);
     response.send("Invalid user");
@@ -81,14 +82,38 @@ app.post("/login", async (request, response) => {
       databaseUser.password
     );
     if (isPasswordMatched === true) {
-      //   const payload = { username: username };
-      //   const jwtToken = jwt.sign(payload, "qwertyuiop");
-
-      //   response.send({ jwtToken });
-      response.send("Login success!");
+      const payload = { username: username };
+      const jwtToken = jwt.sign(payload, "qwertyuiop");
+      //   console.log(jwtToken);
+      response.send({ jwtToken });
+      //    response.send("Login success!");
     } else {
       response.status(400);
       response.send("Invalid password");
     }
   }
+});
+
+app.post("/posts", async (request, response) => {
+  const postsDetails = request.body;
+  console.log("request", request.body);
+  // let us assume we have the table named book with title, author_id, and rating as columns
+  const values = postsDetails.map(
+    (eachPost) =>
+      `('${eachPost.userId},${eachPost.id},${eachPost.title}',${eachPost.body})`
+  );
+
+  const valuesString = values.join(",");
+
+  console.log("valuesString", valuesString);
+
+  const addBookQuery = `
+    INSERT INTO
+      POSTS (user_id,id,title,body)
+    VALUES
+       ${valuesString};`;
+
+  const dbResponse = await db.run(addBookQuery);
+  const bookId = dbResponse.user_id;
+  response.send({ bookId: bookId });
 });
