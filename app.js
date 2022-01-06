@@ -3,11 +3,13 @@ const { open } = require("sqlite");
 const sqlite3 = require("sqlite3");
 const path = require("path");
 const bcrypt = require("bcrypt");
+const cors = require("cors");
 // const json = require("jsonwebtoken");
 
 const databasePath = path.join(__dirname, "financePeer.db");
 
 const app = express();
+app.use(cors());
 
 app.use(express.json());
 
