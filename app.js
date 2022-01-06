@@ -20,7 +20,9 @@ const initializeDbAndServer = async () => {
       driver: sqlite3.Database,
     });
 
-    app.listen(3000, () =>
+    console.log(process.env.PORT);
+
+    app.listen(process.env.PORT || 3000, () =>
       console.log("Server Running at http://localhost:3000/")
     );
   } catch (error) {
@@ -48,7 +50,7 @@ app.post("/register", async (request, response) => {
      VALUES
       (
        '${username}',
-       '${hashedPassword}',
+       '${hashedPassword}'
       );`;
     if (validatePassword(password)) {
       await database.run(createUserQuery);
