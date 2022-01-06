@@ -96,24 +96,28 @@ app.post("/login", async (request, response) => {
 
 app.post("/posts", async (request, response) => {
   const postsDetails = request.body;
-  console.log("request", request.body);
+  //   console.log("request", request);
   // let us assume we have the table named book with title, author_id, and rating as columns
-  const values = postsDetails.map(
-    (eachPost) =>
-      `('${eachPost.userId},${eachPost.id},${eachPost.title}',${eachPost.body})`
-  );
+  if (postsDetails) {
+    const values = postsDetails.map(
+      (eachPost) =>
+        `('${eachPost.userId},${eachPost.id},${eachPost.title}',${eachPost.body})`
+    );
 
-  const valuesString = values.join(",");
+    const valuesString = values.join(",");
 
-  console.log("valuesString", valuesString);
+    console.log("valuesString", valuesString);
 
-  const addBookQuery = `
+    const addBookQuery = `
     INSERT INTO
       POSTS (user_id,id,title,body)
     VALUES
        ${valuesString};`;
 
-  const dbResponse = await db.run(addBookQuery);
-  const bookId = dbResponse.user_id;
-  response.send({ bookId: bookId });
+    const dbResponse = await database.run(addBookQuery);
+    const bookId = dbResponse.user_id;
+    response.send({ bookId: bookId });
+  } else {
+    response.send("No data");
+  }
 });
