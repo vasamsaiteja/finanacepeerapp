@@ -1,11 +1,8 @@
-/*
- *  Created a Table with name todo in the todoApplication.db file using the CLI.
- */
-
 const express = require("express");
 const { open } = require("sqlite");
 const sqlite3 = require("sqlite3");
 const path = require("path");
+const bcrypt = require("bcrypt");
 // const json = require("jsonwebtoken");
 
 const databasePath = path.join(__dirname, "financePeer.db");
@@ -34,6 +31,38 @@ const initializeDbAndServer = async () => {
 
 initializeDbAndServer();
 
+const validatePassword = (password) => {
+  return password.length > 4;
+};
+
+app.post("/register", async (request, response) => {
+  const { username, password } = request.body;
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const selectUserQuery = `SELECT * FROM user WHERE username = '${username}';`;
+  const databaseUser = await database.get(selectUserQuery);
+
+  if (databaseUser === undefined) {
+    const createUserQuery = `
+     INSERT INTO
+      user (username, password)
+     VALUES
+      (
+       '${username}',
+       '${hashedPassword}',
+      );`;
+    if (validatePassword(password)) {
+      await database.run(createUserQuery);
+      response.send("User created successfully");
+    } else {
+      response.status(400);
+      response.send("Password is too short");
+    }
+  } else {
+    response.status(400);
+    response.send("User already exists");
+  }
+});
+
 app.post("/login", async (request, response) => {
   const { username, password } = request.body;
   const selectUserQuery = `SELECT * FROM user WHERE username = '${username}';`;
@@ -43,12 +72,16 @@ app.post("/login", async (request, response) => {
     response.status(400);
     response.send("Invalid user");
   } else {
-    if (databaseUser.password === "qwerty@123") {
+    const isPasswordMatched = await bcrypt.compare(
+      password,
+      databaseUser.password
+    );
+    if (isPasswordMatched === true) {
       //   const payload = { username: username };
       //   const jwtToken = jwt.sign(payload, "qwertyuiop");
 
       //   response.send({ jwtToken });
-      response.send("Login successfully");
+      response.send("Login success!");
     } else {
       response.status(400);
       response.send("Invalid password");
